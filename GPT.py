@@ -2,6 +2,7 @@ import paramiko
 import openai
 from flask import Flask, request, jsonify
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from requests import post
 
 app = Flask(__name__)
 
@@ -51,6 +52,13 @@ def receive_command():
     output, error = execute_command(command)
     return jsonify({'output': output, 'error': error})
 
+@app.route('/telegram', methods=['POST'])
+def receive_telegram_command():
+    command = request.json['command']
+    record_command(command)
+    output, error = execute_command(command)
+    return jsonify({'output': output, 'error': error})
+
 @app.route('/chat', methods=['POST'])
 def chat_with_gpt():
     user_input = request.json['input']
@@ -63,10 +71,12 @@ def start(update, context):
     context.bot.send_message(chat_id=user_id, text="Bienvenue !")
 
 def receive_telegram_message(update, context):
-    user_id = update.effective_user.id
     user_input = update.message.text
     response = generate_response(user_input)
-    context.bot.send_message(chat_id=user_id, text=response)
+    context.bot.send_message(chat_id=update.effective_user.id, text=response)
+    
+    # Envoyer la commande à notre serveur Flask pour l'exécuter sur le VPS
+    post('http://localhost:8000/telegram', json={'command': user_input})
 
 if __name__ == '__main__':
     # Démarrer le serveur Flask
