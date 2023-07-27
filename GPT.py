@@ -67,11 +67,11 @@ def chat_with_gpt():
 
 # Integration with Telegram
 def start(update, context):
-    user_id = update.effective_user.id
-    context.bot.send_message(chat_id=user_id, text="Welcome!")
+    chat_id = update.effective_chat.id  # Get the chat ID
+    context.bot.send_message(chat_id=chat_id, text="Welcome!")
 
 def receive_telegram_message(update, context):
-    user_id = update.effective_user.id
+    chat_id = update.effective_chat.id  # Get the chat ID
     user_input = update.message.text
 
     # Send the user input to ChatGPT and get the response
@@ -81,9 +81,9 @@ def receive_telegram_message(update, context):
     output, error = execute_command(response)
 
     # Send the output and any error back to the user
-    context.bot.send_message(chat_id=user_id, text=output)
+    context.bot.send_message(chat_id=chat_id, text=output)
     if error:
-        context.bot.send_message(chat_id=user_id, text=f"Error: {error}")
+        context.bot.send_message(chat_id=chat_id, text=f"Error: {error}")
 
 if __name__ == '__main__':
     # Start the Flask server
