@@ -1,6 +1,7 @@
 import paramiko
 import openai
 from flask import Flask, request, jsonify
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 app = Flask(__name__)
 
@@ -56,5 +57,31 @@ def chat_with_gpt():
     response = generate_response(user_input)
     return jsonify({'response': response})
 
+# Intégration avec Telegram
+def start(update, context):
+    user_id = update.effective_user.id
+    context.bot.send_message(chat_id=user_id, text="Bienvenue !")
+
+def receive_telegram_message(update, context):
+    user_id = update.effective_user.id
+    user_input = update.message.text
+    response = generate_response(user_input)
+    context.bot.send_message(chat_id=user_id, text=response)
+
 if __name__ == '__main__':
+    # Démarrer le serveur Flask
     app.run(host='0.0.0.0', port=8000)
+
+    # Démarrer le bot Telegram
+    telegram_token = 'VOTRE_CLE_API_TELEGRAM'
+    updater = Updater(token=telegram_token, use_context=True)
+    dispatcher = updater.dispatcher
+
+    start_handler = CommandHandler('start', start)
+    dispatcher.add_handler(start_handler)
+
+    message_handler = MessageHandler(Filters.text & ~Filters.command, receive_telegram_message)
+    dispatcher.add_handler(message_handler)
+
+    updater.start_polling()
+    updater.idle()
