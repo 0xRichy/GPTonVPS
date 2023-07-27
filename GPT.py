@@ -24,6 +24,8 @@ def record_command(command):
     commands_history.append(command)
 
 def execute_command(command):
+    if command.startswith('http'):
+        command = f'curl {command}'
     stdin, stdout, stderr = ssh_client.exec_command(command)
     output = stdout.read().decode('utf-8')
     error = stderr.read().decode('utf-8')
@@ -31,9 +33,13 @@ def execute_command(command):
 
 def generate_response(prompt):
     response = openai.Completion.create(
-        engine="text-davinci-002",  # Vous pouvez choisir le moteur GPT-3 approprié
+        engine="text-davinci-002",
         prompt=prompt,
-        max_tokens=100
+        max_tokens=100,
+        temperature=1.0,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0
     )
     return response.choices[0].text.strip()
 
