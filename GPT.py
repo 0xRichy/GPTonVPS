@@ -33,17 +33,33 @@ def execute_command(command):
     error = stderr.read().decode('utf-8')
     return output, error
 
-def generate_response(prompt):
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=100,
-        temperature=1.0,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0
-    )
-    return response.choices[0].text.strip()
+def generate_responses(prompt):
+    responses = []
+    max_iterations = 10  # You can adjust this value as needed
+    iteration = 0
+
+    while iteration < max_iterations:
+        response = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=prompt,
+            max_tokens=100,
+            temperature=1.0,
+            top_p=1.0,
+            frequency_penalty=0.0,
+            presence_penalty=0.0,
+            stop=["\n"]  # Signal to stop when ChatGPT generates a newline
+        )
+
+        response_text = response.choices[0].text.strip()
+        responses.append(response_text)
+
+        # Check if the response contains a newline to see if ChatGPT finished speaking
+        if "\n" in response_text:
+            break
+
+        iteration += 1
+
+    return responses
 
 @app.route('/command', methods=['POST'])
 def receive_command():
@@ -62,8 +78,8 @@ def receive_telegram_command():
 @app.route('/chat', methods=['POST'])
 def chat_with_gpt():
     user_input = request.json['input']
-    response = generate_response(user_input)
-    return jsonify({'response': response})
+    responses = generate_responses(user_input)
+    return jsonify({'responses': responses})
 
 # Intégration avec Telegram
 def start(update, context):
